@@ -34,14 +34,14 @@ const type = '50100';
                     let { img = "" } = JSON.parse(body);
                     img = 'data:image/png;base64,' + img;
                     let { data = {} } = await axios.post('http://api.jfbym.com/api/YmServer/customApi', { image: img, token, type });
-                    let { data: value = 0, code = 0 } = data.data;
-                    if (value == 0) {
+                    let { data: value = -1, code = 0 } = data.data;
+                    if (value == -1) {
                         let codestr = codes[code] ?? "不晓得是啥问题，去平台看看吧"
                         console.log(`验证码获取失败，平台的返回结果是：${code}-${codestr}`);
                         message += `<div>验证码获取失败，平台的返回结果是：${code}-${codestr}</div>`;
                         console.log("任务结束，正在退出")
                         await page.close();
-                        await browser.disconnect();
+                        browser.disconnect();
                         process.exit(0)
                     }
                     await page.click(".el-input__inner");
@@ -51,52 +51,26 @@ const type = '50100';
                     message += `<div>验证码获取成功，值为${value}</div>`;
                     await page.type(".el-form-item:nth-child(4) .el-input__inner", `${value}`);
                     await page.click(".el-form-item__content .login_submit");
-                })
-            }
-
-            if (response.url().indexOf("/register/login") != -1) {
-                response.text().then(async (body) => {
-                    let { data = {} } = JSON.parse(body);
-                    let { token = "" } = data;
-                    token = 'Bearer ' + token;
-                    console.log(`登录成功，获取token成功`);
-                    message += `<div>登录成功，获取token成功</div>`;
-                    console.log("开始调用签到接口");
-                    message += `<div>开始调用签到接口</div>`;
-                    let url = "https://www.delbug.cn/prod-api/delbug/integral/addSignIn/0";
-                    const headers = {
-                        'Content-Type': 'application/json',
-                        'Authorization': token,
-                        "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
-                    };
-                    await axios.get(url, { headers: headers });
-                })
-            }
-
-
-            if (response.url().indexOf("userWhetherCheckIn") != -1) {
-                response.text().then(async (body) => {
-                    let { code = '200', msg = '' } = JSON.parse(body);
-                    if (code == 200) {
-                        console.log('签到成功了！')
-                        message += `<div>签到成功了！</div>`;
-                    } else {
-                        console.log(`签到失败！状态码：${code}-${msg}`);
-                        message += `<div>签到失败！状态码：${code}-${msg}</div>`;
-                    }
+                    await page.waitForNavigation();
+                    message += `<div>登录成功</div>`;
+                    await page.waitForSelector('.leftMenu_footer_userImg')
+                    await page.hover('.leftMenu_footer_userImg');
+                    await page.click('.icon-gerenzhongxin')
+                    await page.waitForNavigation();
+                    await page.waitForSelector('.el-badge')
+                    await page.click(".el-badge button span");
+                    await page.waitForSelector('.dialog-footer')
+                    await page.click(".dialog-footer button span");
                     let url = `http://www.pushplus.plus/send?token=${process.env.PUSHTOKEN}&title=debug签到&content=${message}&template=html`;
                     await axios.get(url);
                     console.log("任务结束，正在退出")
                     await page.close();
-                    await browser.disconnect();
+                    browser.disconnect();
                     process.exit(0)
                 })
             }
 
         });
-
-
-
 
     console.log("打开登录页面...");
     message += `<div>打开登录页面...</div>`;
