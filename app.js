@@ -4,6 +4,10 @@ const axios = require('axios');
 var token = process.env.CODETOKEN;
 var index = 0;
 
+function wait(ms) {
+    return new Promise(resolve => setTimeout(() => resolve(), ms));
+};
+
 var message = '';
 
 const codes = {
@@ -57,10 +61,24 @@ const type = '50100';
                     await page.hover('.leftMenu_footer_userImg');
                     await page.click('.icon-gerenzhongxin')
                     await page.waitForNavigation();
-                    await page.waitForSelector('.el-badge')
-                    await page.click(".el-badge button span");
-                    await page.waitForSelector('.dialog-footer')
-                    await page.click(".dialog-footer button span");
+                    let res = await page.$('.el-badge .signInButton');
+                    async function getnode(res = null) {
+                        if (res) return res;
+                        res = await page.$('.el-badge .signInButton');
+                        return await getnode(res);
+                    }
+                    res = await getnode(res);
+                    await wait(2000);
+                    await res.click();
+                    let res1 = await page.$('.dialog-footer .signInButton');
+                    async function getnode1(res1 = null) {
+                        if (res1) return res1;
+                        res1 = await page.$('.dialog-footer .signInButton');
+                        return await getnode1(res1);
+                    }
+                    res1 = await getnode1(res1);
+                    await wait(2000);
+                    await res1.click();
                     let url = `http://www.pushplus.plus/send?token=${process.env.PUSHTOKEN}&title=debug签到&content=${message}&template=html`;
                     await axios.get(url);
                     console.log("任务结束，正在退出")
